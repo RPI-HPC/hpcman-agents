@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# hdagent:    HPCman home directory agent.
+#
+# chkconfig:    2345 28 72
+# description:  HPCman agent to keep home directories synchronized.
+#
+# config: /etc/hpchomedir.cfg
+# pidfile: /var/run/hdagent.pid
+
+### BEGIN INIT INFO
+# Provides:       hdagent
+# Required-Start:
+# Required-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: HPCman home directory agent
+### END INIT INFO
+
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source auxiliary options file if we have one.
+if [ -r /etc/sysconfig/hdagent ]; then
+	. /etc/sysconfig/hdagent
+fi
+
+HDAGENT=/opt/hpcman/agents/hdagent.py
+HDAGENT_CONFIG=/etc/hpchomedir.cfg
+PID_FILE=/var/lock/subsys/hdagent
+
+RETVAL=0
+
+start()
+{
+	echo -n $"Starting $HDAGENT: "
+	python $HDAGENT -c $HDAGENT_CONFIG -d > $PID_FILE && success || failure
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && touch /var/lock/subsys/hdagent
+	echo
+}
+
+bootstrap()
+{
+	echo -n $"Starting $HDAGENT: "
+	python $HDAGENT -c $HDAGENT_CONFIG -d -b > $PID_FILE && success || failure
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && touch /var/lock/subsys/hdagent
+	echo
+}
+
+stop()
+{
+	echo -n $"Stopping $HDAGENT: "
+	if [ -f $PID_FILE ] ; then
+		killproc -p $PID_FILE $HDAGENT
+	else
+		failure $"Stopping $HDAGENT"
+	fi
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && rm -f /var/lock/subsys/hdagent
+	echo
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	bootstrap)
+		bootstrap
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/log/subsys/hdagent ]; then
+			stop
+			start
+		fi
+		;;
+	reload)
+		stop
+		bootstrap
+		;;
+	status)
+		status -p $PID_FILE hdagent
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|condrestart|reload|bootstrap|status}"
+		RETVAL=1
+esac
+exit $RETVAL

@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# ldapagent:    HPCman LDAP agent.
+#
+# chkconfig:    2345 28 72
+# description:  HPCman agent to keep LDAP synchronized.
+#
+# config: /etc/hpcldap.cfg
+# pidfile: /var/run/ldapagent.pid
+
+### BEGIN INIT INFO
+# Provides: ldapagent
+# Required-Start: ldap
+# Required-Stop: ldap
+# Short-Description: HPCman LDAP agent
+### END INIT INFO
+
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source auxiliary options file if we have one.
+if [ -r /etc/sysconfig/ldapagent ]; then
+	. /etc/sysconfig/ldapagent
+fi
+
+LDAPAGENT=/opt/hpcman/agents/ldapagent.py
+LDAPAGENT_CONFIG=/etc/hpcldap.cfg
+PID_FILE=/var/lock/subsys/ldapagent
+
+RETVAL=0
+
+start()
+{
+	echo -n $"Starting $LDAPAGENT: "
+	python $LDAPAGENT -c $LDAPAGENT_CONFIG -d > $PID_FILE && success || failure
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && touch /var/lock/subsys/ldapagent
+	echo
+}
+
+bootstrap()
+{
+	echo -n $"Starting $LDAPAGENT: "
+	python $LDAPAGENT -c $LDAPAGENT_CONFIG -d -b > $PID_FILE && success || failure
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && touch /var/lock/subsys/ldapagent
+	echo
+}
+
+stop()
+{
+	echo -n $"Stopping $LDAPAGENT: "
+	if [ -f $PID_FILE ] ; then
+		killproc -p $PID_FILE $LDAPAGENT
+	else
+		failure $"Stopping $LDAPAGENT"
+	fi
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && rm -f /var/lock/subsys/ldapagent
+	echo
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	bootstrap)
+		bootstrap
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/log/subsys/ldapagent ]; then
+			stop
+			start
+		fi
+		;;
+	reload)
+		stop
+		bootstrap
+		;;
+	status)
+		status -p $PID_FILE ldapagent
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|condrestart|reload|bootstrap|status}"
+		RETVAL=1
+esac
+exit $RETVAL
