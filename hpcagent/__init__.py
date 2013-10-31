@@ -1,1 +1,1 @@
-__all__ = ["Agent", "SiteAgent", "SiteAuthAgent", "SiteFSAgent"]
+__all__ = ["Agent", "SiteAgent", "SiteAuthAgent", "SiteFSAgent", "SiteProxyAgent"]
