@@ -194,14 +194,16 @@ class ProxyVSite(VSiteProxyAgent):
             logger.debug('Run remote proxy agent "%s %s" on %s', c, op, h)
             cmd = [ sshCmd, h, envCmd ]
             for n in u.column_desc:
-                v = str(u[n])
-                v = v.replace("'", "'\\''")
-                cmd.append( "HPCMAN_%s='%s'" % ( n, v ) )
+                if n != 'password':
+                    v = str(u[n])
+                    v = v.replace("'", "'\\''")
+                    cmd.append( "HPCMAN_%s='%s'" % ( n, v ) )
         else:
             logger.debug('Run local proxy agent "%s %s"', c, op)
             cmd = [ envCmd ]
             for n in u.column_desc:
-                cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
+                if n != 'password':
+                    cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
         cmd.append( c )
         cmd.append( op )
 
