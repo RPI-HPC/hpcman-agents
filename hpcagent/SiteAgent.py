@@ -419,8 +419,10 @@ class SiteAgent(Agent):
                     logger.warn("Database connection broken; retry in %ds",
                                 self.databaseRetryInterval)
                 else:
-                    #r.append(cur)
-                    r.append(self.conn)
+                    if hasattr(cur, 'fileno'):
+                        r.append(cur)
+                    else:
+                        r.append(self.conn)
 		    #print 'Append: ', self.conn.fileno(), self.conn
 
             # If there should be a master, see if the connection is
