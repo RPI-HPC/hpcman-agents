@@ -34,9 +34,10 @@ class RowDict(dict):
     def __init__(self, desc, cols):
         """Build a dictionary for a row."""
 
+        self.column_desc = [d[0] for d in desc]
         dict.__init__(self,
                       chain(izip(count(), cols),
-                            zip([d[0] for d in desc], cols)))
+                            zip(self.column_desc, cols)))
 
     def __getitem__(self, cn):
         if isinstance(cn, int):
