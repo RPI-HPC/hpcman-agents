@@ -149,6 +149,7 @@ class ProxyVSite(VSiteProxyAgent):
 
             # Process the proxy agents.
             self.run_agents('provision_users', u)
+            self.run_agents_sending_password('password', u)
 
 
     def apply_filter(self, filtPath, u):
@@ -181,8 +182,69 @@ class ProxyVSite(VSiteProxyAgent):
 
         return 0
 
+
     def run_agent(self, h, c, op, u):
         """Run an agent on the remote host."""
+        logger = self.aHandle.logger
+
+        cmd = self.build_proxy_command_chain(h, c, op, u)
+
+        # Run the command.
+        try:
+            rc = subprocess.call( cmd )
+        except:
+            logger.exception('Failed running agent %s', c)
+            rc = -1
+        return rc
+
+
+    def run_agents_sending_password(self, op, u):
+        """Run all the agents, with an operation."""
+        logger = self.aHandle.logger
+        proxyAgentList = self.proxyAgentList
+        for h,c in proxyAgentList:
+            rc = self.run_agent_sending_password(h, c, op, u)
+            if rc != 0:
+                return rc
+
+        return 0
+
+
+    def run_agent_sending_password(self, h, c, op, u):
+        """Run an agent on the remote host.  This is sent the hashed
+        password."""
+        logger = self.aHandle.logger
+
+        cmd = self.build_proxy_command_chain(h, c, op, u)
+
+        # FIXME: We need salt, different hashes...
+        ac = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+        import base64
+        pw = u['password']
+        if pw is None:
+            # FIXME: Really want no password allowed.
+            return 0
+        b = base64.b16decode(pw, True)
+        pwh = base64.b64encode(b, ac)
+
+        # Run the command.
+        try:
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 close_fds=True)
+            (po,pe) = p.communicate(pwh+'\n')
+            print po,pe
+            # FIXME: Handle output
+            # FIXME: Make sure not None
+            rc = p.returncode
+        except:
+            logger.exception('Failed running agent %s', c)
+            rc = -1
+        return rc
+
+
+    def build_proxy_command_chain(self, h, c, op, u):
+        """Build a command to run the proxy."""
         logger = self.aHandle.logger
 
         # FIXME: Allow these to change
@@ -206,15 +268,7 @@ class ProxyVSite(VSiteProxyAgent):
                     cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
         cmd.append( c )
         cmd.append( op )
-
-        # Run the command.
-        try:
-            rc = subprocess.call( cmd )
-        except:
-            logger.exception('Failed running agent %s', c)
-            rc = -1
-        return rc
-
+        return cmd
 
 class ProxyAgent(SiteProxyAgent):
 
