@@ -16,6 +16,11 @@ from hpcagent.SiteProxyAgent import *
 from hpcagent.DBHelpers import *
 
 
+def IsCommandExecutable(cmd):
+    """Test if a command seems to be executable, by testing first component."""
+    cl = cmd.split()
+    return os.path.isfile(cl[0]) and os.access(cl[0], os.X_OK)
+
 class ProxyVSite(VSiteProxyAgent):
     """Proxy VSite agent."""
 
@@ -37,7 +42,7 @@ class ProxyVSite(VSiteProxyAgent):
         except:
             self.projectFilterEscape = None
         else:
-            if os.path.isfile(projectFilterEscape) and os.access(projectFilterEscape, os.X_OK):
+            if IsCommandExecutable(projectFilterEscape):
                 self.projectFilterEscape = projectFilterEscape
             else:
                 logger.fatal("Project filter can not be executed: %s", projectFilterEscape)
@@ -48,7 +53,7 @@ class ProxyVSite(VSiteProxyAgent):
         except:
             self.userFilterEscape = None
         else:
-            if os.path.isfile(userFilterEscape) and os.access(userFilterEscape, os.X_OK):
+            if IsCommandExecutable(userFilterEscape):
                 self.userFilterEscape = userFilterEscape
             else:
                 logger.fatal("User filter can not be executed: %s", userFilterEscape)
@@ -133,7 +138,7 @@ class ProxyVSite(VSiteProxyAgent):
             if projectFilterEscape is not None:
                 logger.debug("Check if project '%s' is filtered by %s",
                              u['projName'], projectFilterEscape)
-                rc = self.apply_filter(projectFilterEscape, u)
+                rc = self.apply_filter(projectFilterEscape, 'project_filter', u)
                 if rc != 0:
                     logger.debug("Project '%s' was filtered out, rc=%d", u['projName'], rc)
                     continue
@@ -142,7 +147,7 @@ class ProxyVSite(VSiteProxyAgent):
             if userFilterEscape is not None:
                 logger.debug("Check if user '%s' is filtered by %s",
                              u['UserName'], userFilterEscape)
-                rc = self.apply_filter(userFilterEscape, u)
+                rc = self.apply_filter(userFilterEscape, 'user_filter', u)
                 if rc != 0:
                     logger.debug("User '%s' was filtered out, rc=%d", u['UserName'], rc)
                     continue
@@ -152,7 +157,7 @@ class ProxyVSite(VSiteProxyAgent):
             self.run_agents_sending_password('password', u)
 
 
-    def apply_filter(self, filtPath, u):
+    def apply_filter(self, filtPath, op, u):
         """Apply a filter."""
         logger = self.aHandle.logger
         
@@ -162,7 +167,8 @@ class ProxyVSite(VSiteProxyAgent):
         cmd = [ envCmd ]
         for n in u.column_desc:
             cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
-        cmd.append( filtPath )
+        cmd += filtPath.split()
+        cmd.append(op)
         try:
             rc = subprocess.call( cmd )
         except:
