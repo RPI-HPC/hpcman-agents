@@ -33,7 +33,6 @@ class ProxyVSite(VSiteProxyAgent):
 
         # Get configuration options we need for proxy processing.
         # FIXME:
-        # -- hostname:path-to-helper,  ...
         # -- Additional values for project
         # -- Additional values for user
 
@@ -58,6 +57,42 @@ class ProxyVSite(VSiteProxyAgent):
             else:
                 logger.fatal("User filter can not be executed: %s", userFilterEscape)
                 sys.exit(1)
+
+        try:
+            proxyUser = cp.get(vsName, "proxyuser")
+        except:
+            self.proxyUserPairList = []
+        else:
+            pul = proxyUser.split(',')
+            self.proxyUserPairList = pupl = []
+            for huPair in pul:
+                hu = huPair.split(':')
+                if len(hu) == 1:
+                    pupl.append( ( "*", hu[0].strip()))
+                elif len(hu) == 2:
+                    pupl.append( (hu[0].strip(), hu[1].strip()))
+                else:
+                    logger.fatal("Can not understand host,user pair: %s", huPair)
+                    sys.exit(1)
+        self.proxyUserPairList += [ ("*", None) ]
+
+        try:
+            proxyKey = cp.get(vsName, "proxykey")
+        except:
+            self.proxyKeyPairList = []
+        else:
+            pkl = proxyKey.split(',')
+            self.proxyKeyPairList = pkpl = []
+            for hkPair in pkl:
+                hkl = hkPair.split(':')
+                if len(hkl) == 1:
+                    pkpl.append( ("*", hkl[0].strip()) )
+                elif len(hkl) == 2:
+                    pkpl.append( (hkl[0].strip(), hkl[1].strip()) )
+                else:
+                    logger.fatal("Can not understand host,key pair: %s", hkPair)
+                    sys.exit(1)
+        self.proxyKeyPairList +=  [ ("*", None) ]
 
         try:
             proxyAgent = cp.get(vsName, "proxyagent")
@@ -251,6 +286,9 @@ class ProxyVSite(VSiteProxyAgent):
 
     def build_proxy_command_chain(self, h, c, op, u):
         """Build a command to run the proxy."""
+
+        from fnmatch import fnmatch
+        
         logger = self.aHandle.logger
 
         # FIXME: Allow these to change
@@ -259,8 +297,29 @@ class ProxyVSite(VSiteProxyAgent):
 
         # Build up a command to run.
         if h is not None:
-            logger.debug('Run remote proxy agent "%s %s" on %s', c, op, h)
-            cmd = [ sshCmd, h, envCmd ]
+            # Find user to run as.
+            for hp,userAs in self.proxyUserPairList:
+                if fnmatch(h, hp):
+                    break
+            # Find key to ssh with.
+            for hp,keyAs in self.proxyKeyPairList:
+                if fnmatch(h, hp):
+                    break
+            # Log.
+            if userAs is None:
+                extMsg = ""
+            else:
+                extMsg = " as " + userAs
+            if keyAs is not None:
+                extMsg += " using key " + keyAs
+            logger.debug('Run remote proxy agent "%s %s" on %s%s', c, op, h, extMsg)
+            # Build the command.
+            cmd = [ sshCmd ]
+            if userAs is not None:
+                cmd += [ '-l', userAs ]
+            if keyAs is not None:
+                cmd += [ '-i', keyAs ]
+            cmd += [ '-tt', '-q', h, envCmd ]
             for n in u.column_desc:
                 if n != 'password':
                     v = str(u[n])
