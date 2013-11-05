@@ -7,6 +7,7 @@ passwords, quotas, etc."""
 
 
 
+import base64
 import os, os.path
 import subprocess
 import shutil
@@ -258,15 +259,11 @@ class ProxyVSite(VSiteProxyAgent):
 
         cmd = self.build_proxy_command_chain(h, c, op, u)
 
-        # FIXME: We need salt, different hashes...
-        ac = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-        import base64
         pw = u['password']
         if pw is None:
             # FIXME: Really want no password allowed.
             return 0
-        b = base64.b16decode(pw, True)
-        pwh = base64.b64encode(b, ac)
+        pwh = base64.b64decode(pw)
 
         # Run the command.
         try:
@@ -340,7 +337,7 @@ class ProxyAgent(SiteProxyAgent):
     def __init__(self, agentKey, VSiteFactory):
         SiteProxyAgent.__init__(self, agentKey, VSiteFactory)
 
-        if self.passwordType not in ("ssha", "md5"):
+        if self.passwordType not in ("sha256", "sha512"):
             self.logger.fatal("Unknown password type '%s'",
                               self.passwordType)
             sys.exit(1)
