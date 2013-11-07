@@ -309,7 +309,8 @@ class ProxyVSite(VSiteProxyAgent):
                 extMsg = " as " + userAs
             if keyAs is not None:
                 extMsg += " using key " + keyAs
-            logger.debug('Run remote proxy agent "%s %s" on %s%s', c, op, h, extMsg)
+            logger.debug('Run remote proxy agent "%s %s" on %s%s for %s', c, op, h,
+                         extMsg, u['username'])
             # Build the command.
             cmd = [ sshCmd ]
             if userAs is not None:
