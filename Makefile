@@ -11,7 +11,7 @@ clean:
 
 install:
 	mkdir -p $(INSTALLDIR)
-	cp hdagent.py ldapagent.py $(INSTALLDIR)
+	cp hdagent.py ldapagent.py proxyagent.py $(INSTALLDIR)
 	mkdir -p $(INSTALLDIR)/hpcagent
 	cp hpcagent/*.py $(INSTALLDIR)/hpcagent
 
