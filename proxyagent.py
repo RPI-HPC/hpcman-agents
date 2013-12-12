@@ -174,7 +174,7 @@ class ProxyVSite(VSiteProxyAgent):
             if projectFilterEscape is not None:
                 logger.debug("Check if project '%s' is filtered by %s",
                              u['projName'], projectFilterEscape)
-                rc = self.apply_filter(projectFilterEscape, 'project_filter', u)
+                rc = self.run_escape(projectFilterEscape, 'project_filter', u)
                 if rc != 0:
                     logger.debug("Project '%s' was filtered out, rc=%d", u['projName'], rc)
                     continue
@@ -183,7 +183,7 @@ class ProxyVSite(VSiteProxyAgent):
             if userFilterEscape is not None:
                 logger.debug("Check if user '%s' is filtered by %s",
                              u['UserName'], userFilterEscape)
-                rc = self.apply_filter(userFilterEscape, 'user_filter', u)
+                rc = self.run_escape(userFilterEscape, 'user_filter', u)
                 if rc != 0:
                     logger.debug("User '%s' was filtered out, rc=%d", u['UserName'], rc)
                     continue
@@ -191,26 +191,6 @@ class ProxyVSite(VSiteProxyAgent):
             # Process the proxy agents.
             self.run_agents('provision_users', u)
             self.run_agents_sending_password('password', u)
-
-
-    def apply_filter(self, filtPath, op, u):
-        """Apply a filter."""
-        logger = self.aHandle.logger
-        
-        # FIXME: Allow this to change.
-        envCmd = '/usr/bin/env'
-        
-        cmd = [ envCmd ]
-        for n in u.column_desc:
-            cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
-        cmd += filtPath.split()
-        cmd.append(op)
-        try:
-            rc = subprocess.call( cmd )
-        except:
-            logger.exception("Failed running filter %s", filtPath)
-            rc = -1
-        return rc
 
 
     def run_agents(self, op, u):

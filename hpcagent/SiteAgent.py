@@ -129,6 +129,26 @@ class VSiteAgent(object):
         self.aHandle.set_timestamp(cur, self.vsName, ts)
         self.is_bootstrapping = False
 
+    def run_escape(self, filtPath, op, u):
+        """Apply a filter."""
+        logger = self.aHandle.logger
+        
+        # FIXME: Allow this to change.
+        envCmd = '/usr/bin/env'
+        
+        cmd = [ envCmd ]
+        for n in u.column_desc:
+            cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
+        cmd += filtPath.split()
+        cmd.append(op)
+        try:
+            rc = subprocess.call( cmd )
+        except:
+            logger.exception("Failed running filter %s", filtPath)
+            rc = -1
+        return rc
+
+
 
 class SiteAgent(Agent):
     """Model an agent that can manage a site."""
