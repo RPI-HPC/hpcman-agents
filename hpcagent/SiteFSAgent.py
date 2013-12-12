@@ -38,28 +38,5 @@ class VSiteFSAgent(VSiteAgent):
                      "start": start,
                      "end": end})
 
-    def get_user_information(self, cur, start=None, end=None):
-
-        q = """SELECT uid,UserName,
-                      gid,groupName,
-                      homeDirectory,quota,
-                      userAccountState,
-                      projid,projName,projGroupName,
-                      lastActive,created
-               FROM vs_user_accounts
-               WHERE siteName=%(siteName)s
-                     AND vsName=%(vsName)s"""
-        if start is not None:
-            q += "      AND modified > %(start)s"
-        if end is not None:
-            q += "      AND modified <= %(end)s"
-        cur.execute(q,
-            {"siteName": self.aHandle.sitename,
-             "vsName": self.vsName,
-             "start": start,
-             "end": end})
-        return cur.fetchall()
-
-
 class SiteFSAgent(SiteAgent):
     pass

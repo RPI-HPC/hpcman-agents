@@ -7,6 +7,7 @@ import sys
 
 # from hpcagent.SiteFSAgent import SiteFSAgent, VSiteFSAgent
 from hpcagent.SiteFSAgent import *
+from hpcagent.DBHelpers import *
 
 def copytree(src, dst, uid, gid):
     """Copy a tree of files, setting uid and gid."""
@@ -167,38 +168,39 @@ class HomeDirVSite(VSiteFSAgent):
             if u is None:
                 break
 
-            userAccountState = u[6]
+            #userAccountState = u[6]
+            userAccountState = u['userAccountState']
             if userAccountState != "A":
-                logger.info("Skip account %s, state %s", u[1], userAccountState)
+                logger.info("Skip account %s, state %s", u['userName'], userAccountState)
                 continue
 
             # +FIXME: Refactor?
             # -FIXME
             if self.homeformatFlag:
                 hpath = cp.get(vsName, 'homeformat', False,
-                               {'user': u[1],
-                                'uid': u[0],
-                                'group': u[3],
-                                'gid': u[2],
-                                "homedir": u[4],
-                                "project": u[8],
-                                "projectid": u[7],
-                                "projectgroup": u[9]})
+                               {'user': u['userName'],
+                                'uid': u['uid'],
+                                'group': u['groupName'],
+                                'gid': u['gid'],
+                                "homedir": u['homeDirectory'],
+                                "project": u['projName'],
+                                "projectid": u['projid'],
+                                "projectgroup": u['projGroupName']})
             else:
-                hpath = u[4]
+                hpath = u['homeDirectory']
 
             # Does this exist?
             if os.path.isdir(hpath):
-                logger.debug("home directory already exists for user '%s'", u[1])
+                logger.debug("home directory already exists for user '%s'", u['userName'])
             elif os.path.exists(hpath):
                 logger.warning("home directory '%s' for user '%s' exists and is not a directory",
-                               hpath, u[1])
+                               hpath, u['userName'])
             else:
-                logger.debug("Provision home directory for '%s'", u[1])
+                logger.debug("Provision home directory for '%s'", u['userName'])
                 if projectFilter is not None:
                     try:
                         logger.debug("Check if project '%s' filtered by %s",
-                                     u[8], projectFilter)
+                                     u['projName'], projectFilter)
                         rc = subprocess.call([projectFilter,
                                               hpath,     # homeDirectory
                                               u[8],      # projName
