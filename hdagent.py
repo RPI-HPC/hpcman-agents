@@ -148,7 +148,24 @@ class HomeDirVSite(VSiteFSAgent):
         cp = aHandle.configParser
         logger = aHandle.logger
         logger.info("Updating users.")
-        for u in self.get_user_information(cur, ts):
+
+
+        # Get cursor to user information, filtered by timestamp.
+        try:
+            self.start_get_user_information(cur, start=ts, end=end)
+        except DBDatabaseError:
+            logger.info("Unable to query user information.")
+            raise
+
+        # Iterate over selected users.
+        while True:
+            try:
+                u = DB_get_next_row(cur)
+            except DBDatabaseError:
+                logger.info("Unable to fetch user information")
+                raise
+            if u is None:
+                break
 
             userAccountState = u[6]
             if userAccountState != "A":
