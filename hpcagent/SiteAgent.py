@@ -4,6 +4,7 @@ import logging
 import os.path
 import select
 import socket
+import subprocess
 import sys
 import time
 import xdrlib
