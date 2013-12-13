@@ -203,29 +203,29 @@ class HomeDirVSite(VSiteFSAgent):
                                      u['projName'], projectFilter)
                         rc = subprocess.call([projectFilter,
                                               hpath,     # homeDirectory
-                                              u[8],      # projName
-                                              str(u[7]), # projID
-                                              u[9],      # projGroupName
-                                              str(u[2]), # gid
-                                              str(u[10]), # user lastActive
-                                              str(u[11])  # user created
+                                              u['projName'],     # projName
+                                              str(u['projID']),  # projID
+                                              u['projGroupName'],# projGroupName
+                                              str(u['gid']), # gid
+                                              str(u['lastActive']), # user lastActive
+                                              str(u['created'])  # user created
                                               ])
                     except:
                         logger.exception("Failed running project filter")
                         rc = -1
                     if rc != 0:
-                        logger.debug("Project '%s' filtered out (%d)", u[8], rc)
+                        logger.debug("Project '%s' filtered out (%d)", u['projName'], rc)
                         continue
                 if projectEscape is not None:
                     try:
                         logger.debug("Check provisioning for project '%s' with %s",
-                                     u[8], projectEscape)
+                                     u['projName'], projectEscape)
                         rc = subprocess.call([projectEscape,
                                               hpath,     # Home directory
-                                              u[8],      # Project name
-                                              str(u[7]), # Project ID
-                                              u[9],      # Project group name
-                                              str(u[2])  # gid
+                                              u['projName'],      # Project name
+                                              str(u['projID']), # Project ID
+                                              u['projGropName'],      # Project group name
+                                              str(u['gid'])  # gid
                                               ])
                         logger.debug("Project is provisioned.")
                     except:
@@ -233,60 +233,62 @@ class HomeDirVSite(VSiteFSAgent):
                         rc = -1
                     if rc != 0:
                         logger.debug("Project '%s' provisioning failed (%d)",
-                                     u[8], rc)
+                                     u['projName'], rc)
                         continue
                 if homeFilter is not None:
                     try:
                         logger.debug("Check if user '%s' filtered by %s",
-                                     u[2], homeFilter)
+                                     u['userName'], homeFilter)
                         rc = subprocess.call([homeFilter,
                                               hpath,      # homeDirectory
-                                              u[8],       # projName
-                                              str(u[7]),  # projID
-                                              u[9],       # projGroupName
-                                              str(u[2]),  # gid
-                                              str(u[10]), # user lastActive
-                                              str(u[11])  # user created
+                                              u['projName'],       # projName
+                                              str(u['projID']),  # projID
+                                              u['projGroupName'],       # projGroupName
+                                              str(u['gid']),  # gid
+                                              str(u['lastActive']), # user lastActive
+                                              str(u['created'])  # user created
                                               ])
                     except:
                         logger.exception("Failed running home filter")
                         rc = -1
                     if rc != 0:
-                        logger.debug("User '%s' filtered out (%d)", u[2], rc)
+                        logger.debug("User '%s' filtered out (%d)",
+                                     u['userName'], rc)
                         continue
                 try:
-                    logger.debug("Creating user '%s' home directory", u[1])
-                    copytree(homeskeleton, hpath, u[0], u[2])
+                    logger.debug("Creating user '%s' home directory",
+                                 u['userName'])
+                    copytree(homeskeleton, hpath, u['uid'], u['gid'])
                 except:
                     logger.exception("Failed creating home directory.")
                 else:
                     if homeEscape is not None:
                         try:
                             logger.debug("Check provisioning for home directory '%s' with %s",
-                                         u[2], homeEscape)
+                                         u['userName'], homeEscape)
                             rc = subprocess.call([homeEscape,
                                                   hpath,  # Home path
-                                                  u[1],   # User name
-                                                  u[3],   # Group name
-                                                  u[8],   # projName,
-                                                  u[9],   # projGroupName
-                                                  str(u[0]), # uid
-                                                  str(u[2]), # gid
-                                                  str(u[7])  # projID
+                                                  u['userName'],   # User name
+                                                  u['groupName'],   # Group name
+                                                  u['projName'],   # projName,
+                                                  u['projGroupName'],   # projGroupName
+                                                  str(u['uid']), # uid
+                                                  str(u['gid']), # gid
+                                                  str(u['projID'])  # projID
                                                   ])
                         except:
                             logger.exception("Failed running home escape.")
                             rc = -1
                         if rc != 0:
                             logger.debug("User '%s' provisioning failed (%d)",
-                                         u[2], rc)
+                                         u['userName'], rc)
                             continue
 
             # Maintenance escapes, if home directory exists.
             if os.path.isdir(hpath) and projectMaintEscape is not None:
                 try:
                     logger.debug("Maintain provisioning for project '%s' with %s",
-                                 u[8], projectMaintEscape)
+                                 u['projName'], projectMaintEscape)
                     os.spawnl(os.P_WAIT, projectMaintEscape, projectMaintEscape,
                               u[4], u[8], str(u[7]), u[9], str(u[2]))
                     logger.debug("Project provisioning has been maintained.")
@@ -295,7 +297,7 @@ class HomeDirVSite(VSiteFSAgent):
             if os.path.isdir(hpath) and homeMaintEscape is not None:
                 try:
                     logger.debug("Maintain provisioning for home directory '%s' with %s",
-                                 u[1], homeMaintEscape)
+                                 u['userName'], homeMaintEscape)
                     rc = subprocess.call([homeMaintEscape,
                                           hpath,    # Home path
                                           u[1],     # User name
@@ -311,7 +313,7 @@ class HomeDirVSite(VSiteFSAgent):
                     rc = -1
                 if rc != 0:
                     logger.debug("User '%s' provisioning failed (%d)",
-                                 u[2], rc)
+                                 u['userName'], rc)
                     continue
 
 
