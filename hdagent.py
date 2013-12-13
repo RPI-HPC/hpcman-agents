@@ -224,7 +224,7 @@ class HomeDirVSite(VSiteFSAgent):
                                               hpath,     # Home directory
                                               u['projName'],      # Project name
                                               str(u['projID']), # Project ID
-                                              u['projGropName'],      # Project group name
+                                              u['projGroupName'],      # Project group name
                                               str(u['gid'])  # gid
                                               ])
                         logger.debug("Project is provisioned.")
