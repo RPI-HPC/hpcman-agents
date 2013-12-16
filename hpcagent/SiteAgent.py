@@ -138,7 +138,7 @@ class VSiteAgent(object):
         envCmd = '/usr/bin/env'
         
         cmd = [ envCmd ]
-        for n in u.column_desc:
+        for n in u.keys():
             cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
         cmd += filtPath.split()
         cmd.append(op)
