@@ -44,6 +44,9 @@ class RowDict(dict):
             return dict.__getitem__(self, cn)
         return dict.__getitem__(self, cn.lower())
 
+    def __setitem(self, cn, val):
+        dict.__setitem__(self, cn.lower(), val)
+
 
 def DB_get_next_row(cur):
     """Get a row from a cursor.  Returns a dict, or None."""
