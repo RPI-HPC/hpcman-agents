@@ -298,7 +298,7 @@ class ProxyVSite(VSiteProxyAgent):
             if keyAs is not None:
                 cmd += [ '-i', keyAs ]
             cmd += [ '-tt', '-q', h, envCmd ]
-            for n in u.column_desc:
+            for n in u.keys():
                 if n != 'password':
                     v = str(u[n])
                     v = v.replace("'", "'\\''")
@@ -306,7 +306,7 @@ class ProxyVSite(VSiteProxyAgent):
         else:
             logger.debug('Run local proxy agent "%s %s"', c, op)
             cmd = [ envCmd ]
-            for n in u.column_desc:
+            for n in u.keys():
                 if n != 'password':
                     cmd.append( 'HPCMAN_%s=%s' % (n, u[n]) )
         cmd.append( c )
