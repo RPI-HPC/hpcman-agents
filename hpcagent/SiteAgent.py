@@ -379,7 +379,7 @@ class SiteAgent(Agent):
                         endTime = None
                         if endDict is not None and endDict.has_key(vsName):
                             endTime = endDict[vsName]
-                        if self.vsite_ready_escape = None:
+                        if self.vsite_ready_escape == None:
                             vh.vsite_update(cur, endTime)
                         else:
                             u = { 'vsite': vsName }
