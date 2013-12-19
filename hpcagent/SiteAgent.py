@@ -134,8 +134,8 @@ class VSiteAgent(object):
         """Apply a filter."""
         logger = self.aHandle.logger
         
-        # FIXME: Allow this to change.
-        envCmd = '/usr/bin/env'
+        # Environment command
+        envCmd = self.aHandle.envCmd
         
         cmd = [ envCmd ]
         for n in u.keys():
@@ -194,6 +194,7 @@ class SiteAgent(Agent):
         self.get_config_data_slaves()
         self.get_config_data_masters()
         self.get_config_data_update_times()
+        self.get_config_data_general_escapes()
 
     def get_config_data_sitename(self):
         """Site agents require a specific site name."""
@@ -277,6 +278,25 @@ class SiteAgent(Agent):
                 logging.fatal("Invalid value for 'update_heartbeat': %s", uhb)
                 sys.exit(1)
 
+
+    def get_config_data_general_escapes(self):
+        """Get general information for escapes."""
+        # The location of the env command
+        cp = self.configParser
+        try:
+            envCmd = cp.get(self.CONSECT, "env_command")
+        except:
+            self.envCmd = "/usr/bin/env"
+        else:
+            self.envCmd = envCmd
+        # Get vSite update readiness escape
+        try:
+            vsite_ready_escape = cp.get(self.CONSECT, "vsite_ready_escape")
+        except:
+            self.vsite_ready_escape = None
+        else:
+            self.vsite_ready_escape = vsite_ready_escape
+
     # -- other...
 
     def get_vsites(self, cur):
@@ -359,7 +379,16 @@ class SiteAgent(Agent):
                         endTime = None
                         if endDict is not None and endDict.has_key(vsName):
                             endTime = endDict[vsName]
-                        vh.vsite_update(cur, endTime)
+                        if self.vsite_ready_escape = None:
+                            vh.vsite_update(cur, endTime)
+                        else:
+                            u = { 'vsite': vsName }
+                            rc = vh.run_escape(self.vsite_ready_escape,
+                                               'vsite_ready', u)
+                            if rc == 0:
+                                vh.vsite_update(cur, endTime)
+                            else:
+                                self.logger.warn('VSite %s is not ready', vsName)
                     except UpdateVSiteError:
                         self.logger.exception("Agent VSite update error.")
         finally:
