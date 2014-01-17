@@ -147,6 +147,7 @@ class VSiteAgent(object):
         except:
             logger.exception("Failed running filter %s", filtPath)
             rc = -1
+        logger.info("Escape %s %s exit code %i", filtPath, op, rc)
         return rc
 
 
