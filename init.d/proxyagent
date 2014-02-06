@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# proxyagent:    HPCman proxy agent.
+#
+# chkconfig:    2345 28 72
+# description:  HPCman agent using proxy scripts to maintain users, etc.
+#
+# config: /etc/hpcproxy.cfg
+# pidfile: /var/run/proxyagent.pid
+
+### BEGIN INIT INFO
+# Provides:       proxyagent
+# Required-Start:
+# Required-Stop:
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# Short-Description: HPCman proxy agent
+### END INIT INFO
+
+
+# Source function library.
+. /etc/init.d/functions
+
+# Source auxiliary options file if we have one.
+if [ -r /etc/sysconfig/proxyagent ]; then
+	. /etc/sysconfig/proxyagent
+fi
+
+PXAGENT=/opt/hpcman/agents/proxyagent.py
+PXAGENT_CONFIG=/etc/hpcproxy.cfg
+PID_FILE=/var/lock/subsys/proxyagent
+
+RETVAL=0
+
+start()
+{
+	echo -n $"Starting $PXAGENT: "
+	python $PXAGENT -c $PXAGENT_CONFIG -d > $PID_FILE && success || failure
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && touch /var/lock/subsys/proxyagent
+	echo
+}
+
+bootstrap()
+{
+	echo -n $"Starting $PXAGENT: "
+	python $PXAGENT -c $PXAGENT_CONFIG -d -b > $PID_FILE && success || failure
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && touch /var/lock/subsys/proxyagent
+	echo
+}
+
+stop()
+{
+	echo -n $"Stopping $PXAGENT: "
+	if [ -f $PID_FILE ] ; then
+		killproc -p $PID_FILE $PXAGENT
+	else
+		failure $"Stopping $PXAGENT"
+	fi
+	RETVAL=$?
+	[ "$RETVAL" = 0 ] && rm -f /var/lock/subsys/proxyagent
+	echo
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	bootstrap)
+		bootstrap
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/log/subsys/proxyagent ]; then
+			stop
+			start
+		fi
+		;;
+	reload)
+		stop
+		bootstrap
+		;;
+	status)
+		status -p $PID_FILE proxyagent
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|condrestart|reload|bootstrap|status}"
+		RETVAL=1
+esac
+exit $RETVAL
